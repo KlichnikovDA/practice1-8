@@ -55,10 +55,10 @@ namespace PracticeTask8
                 // Количество ребер в графе
                 int Edges;
                 // Флаг правильности ввода
-                Size = sr.Read();
-                bool ok = Int32.TryParse(sr.ReadLine(), out Edges);
+                bool ok = Int32.TryParse(sr.ReadLine(), out Size);
+                ok = Int32.TryParse(sr.ReadLine(), out Edges);
                 // Матрица инциденций
-                byte[,] Matrix = new byte[Size, Size];
+                byte[,] Matrix = new byte[Size, Edges];
                 for (int i = 0; i < Size; i++)
                 {
                     string vals = sr.ReadLine();
@@ -88,38 +88,7 @@ namespace PracticeTask8
                 return null;
             }
         }
-
-        // Запись графа в файл
-        public void WriteGraph(string P)
-        {
-            P = Path.GetDirectoryName(P) + Path.GetFileNameWithoutExtension(P) + "output" + Path.GetExtension(P);
-            FileStream File;
-            try
-            {
-                File = new FileStream(P, FileMode.Truncate);
-            }
-            catch (FileNotFoundException)
-            {
-                File = new FileStream(P, FileMode.CreateNew);
-            }
-            StreamWriter sw = new StreamWriter(File);
-            // Размер графа
-            sw.WriteLine(Rows + " " + Columns);
-            sw.WriteLine();
-            // Матрица инциденций
-            for (int i = 0; i < Rows; i++)
-            {
-                for (int j = 0; j < Columns; j++)
-                    sw.Write(IncidenceMatrix[i, j] + " ");
-                sw.WriteLine();
-            }
-
-            Console.WriteLine("Информация об обработанном графе записана в файл " + P);
-
-            sw.Close();
-            File.Close();
-        }
-
+        
         // Выделение блоков графа методом поиска в глубину
         public void Block()
         {
@@ -142,12 +111,12 @@ namespace PracticeTask8
             for (int Edge = 0; Edge < Columns; Edge++)
             {
                 // Смежная вершина
-                int NextVerit = Pos + 1;
+                int NextVerit = 0;
                 // Перебираем ребра, исходящие из (или входящие в) исходной вершины
                 if (IncidenceMatrix[Pos, Edge] == 1)
                 {
                     // Ищем вторую вершину данного ребра 
-                    while (NextVerit < Rows && IncidenceMatrix[NextVerit, Edge] == 0)
+                    while (NextVerit < Rows && IncidenceMatrix[NextVerit, Edge] == 0 || NextVerit==Pos)
                         NextVerit++;
                     // Если нашли еще не пройденную вершину, смежную исходной, то
                     if (NextVerit < Rows && Checked[NextVerit] == 0)
@@ -168,15 +137,15 @@ namespace PracticeTask8
                         }
                     }
                 }
-                //else
-                //{
-                //    // Если вершина уже исследована и 
-                //    if (Checked[NextVerit] < Checked[Pos] && NextVerit != Parent)
-                //    {
-                //        EdgesStack.Push(Edge);
-                //        Minim[Pos] = Math.Min(Minim[NextVerit], Minim[Pos]);
-                //    }
-                //}
+                else
+                {
+                    // Если вершина уже исследована и 
+                    if (Checked[NextVerit] < Checked[Pos] && NextVerit != Parent)
+                    {
+                        EdgesStack.Push(Edge);
+                        Minim[Pos] = Math.Min(Minim[NextVerit], Minim[Pos]);
+                    }
+                }
             }                
         }
     }

@@ -23,6 +23,8 @@ namespace PracticeTask8
         int[] Checked;
         // Стек с номерами ребер, составляющими блок
         Stack<int> EdgesStack;
+        // Список уже использованных ребер
+        List<int> UsedEdges;
 
         // Конструктор
         public Graph(int Rows, int Columns, byte[,] Matrix)
@@ -38,6 +40,7 @@ namespace PracticeTask8
             {
                 Checked[i] = 0;
             }
+            UsedEdges = new List<int>(Columns);
         }
 
         // Чтение графа из файла
@@ -113,8 +116,11 @@ namespace PracticeTask8
                         {
                             int t, cur_size = EdgesStack.Count;
                             // Если этого ребра еще нет в стеке
-                            if (!EdgesStack.Contains(Edge))
+                            if (!UsedEdges.Contains(Edge))
+                            {
+                                UsedEdges.Add(Edge);
                                 EdgesStack.Push(Edge);
+                            }
 
                             //Если вершина еще не посещена
                             if (Checked[NextVerit] == 0)

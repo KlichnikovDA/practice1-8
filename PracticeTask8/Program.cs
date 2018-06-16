@@ -21,6 +21,7 @@ namespace PracticeTask8
             {
                 // Выделение блоков
                 Graph.Block();
+                Console.WriteLine();
             }
 
             Console.WriteLine("Нажмите любую клавишу...");

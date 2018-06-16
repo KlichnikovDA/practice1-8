@@ -21,8 +21,6 @@ namespace PracticeTask8
         int CheckedCount;
         // Порядковые номера обхода вершин
         int[] Checked;
-        // Минимальные номера
-        int[] Minim;
         // Стек с номерами ребер, составляющими блок
         Stack<int> EdgesStack;
 
@@ -36,10 +34,9 @@ namespace PracticeTask8
             CheckedCount = 0;
             EdgesStack = new Stack<int>(Columns);
             Checked = new int[Rows];
-            Minim = new int[Rows];
             for (int i = 0; i < Rows; i++)
             {
-                Checked[i] = Minim[i] = 0;
+                Checked[i] = 0;
             }
         }
 
@@ -51,12 +48,9 @@ namespace PracticeTask8
                 FileStream File = new FileStream(P, FileMode.Open);
                 StreamReader sr = new StreamReader(File);
                 // Размер графа
-                int Size;
+                int Size = Int32.Parse(sr.ReadLine());
                 // Количество ребер в графе
-                int Edges;
-                // Флаг правильности ввода
-                bool ok = Int32.TryParse(sr.ReadLine(), out Size);
-                ok = Int32.TryParse(sr.ReadLine(), out Edges);
+                int Edges = Int32.Parse(sr.ReadLine());
                 // Матрица инциденций
                 byte[,] Matrix = new byte[Size, Edges];
                 for (int i = 0; i < Size; i++)
@@ -70,8 +64,7 @@ namespace PracticeTask8
                     {
                         if (Row[j] != 0 && Row[j] != 1)
                         {
-                            Console.WriteLine("В файле содержатся некорректные данные.");
-                            return null;
+                            throw new Exception();
                         }
                         Matrix[i, j] = Row[j];
                     }
@@ -82,9 +75,14 @@ namespace PracticeTask8
 
                 return new Graph(Size, Edges, Matrix);
             }
-            catch
+            catch (FileNotFoundException e)
             {
                 Console.WriteLine("Не удается открыть файл, проверьте его наличие и правильность пути.");
+                return null;
+            }
+            catch
+            {
+                Console.WriteLine("В файле содержатся некорректные данные.");
                 return null;
             }
         }
@@ -93,60 +91,55 @@ namespace PracticeTask8
         public void Block()
         {
             CheckedCount = 0;
-            // Проход по всем вершинам графа
-            for (int v = 0; v < Rows; v++)
-                // Если вершина еще не была пройдена
-                if (Checked[v] == 0)
-                    // Начинаем поиск из нее
-                    DFS(v, -1);
+            DFS(0, -1);
         }
 
-        // Поиск в глубину с выделением ребер, составляющих блоки
-        void DFS(int Pos, int Parent)
+        // Поиск в глубину
+        int DFS(int Pos, int Parent)
         {
-            // Отмечаем вершину
-            Checked[Pos] = Minim[Pos] = ++CheckedCount;
-
-            // Перебираем смежные вершины
+            Checked[Pos] = ++CheckedCount;
+            // Minim - минимальное расстояние от Pos до входа
+            int Minim = Checked[Pos];
+            // Перебор всех ребер, входящих или исходящих из вершины Pos
             for (int Edge = 0; Edge < Columns; Edge++)
             {
-                // Смежная вершина
-                int NextVerit = 0;
-                // Перебираем ребра, исходящие из (или входящие в) исходной вершины
                 if (IncidenceMatrix[Pos, Edge] == 1)
                 {
-                    // Ищем вторую вершину данного ребра 
-                    while (NextVerit < Rows && IncidenceMatrix[NextVerit, Edge] == 0 || NextVerit==Pos)
+                    int NextVerit = 0;
+                    while (NextVerit < Rows && IncidenceMatrix[NextVerit, Edge] == 0 || NextVerit == Pos)
                         NextVerit++;
-                    // Если нашли еще не пройденную вершину, смежную исходной, то
-                    if (NextVerit < Rows && Checked[NextVerit] == 0)
                     {
-                        // Записываем номер ребра, соединяющего их
-                        EdgesStack.Push(NextVerit);
-                        // Продолжаем поиск из этой вершины
-                        DFS(NextVerit, Pos);
-                        // Переопределяем минимальный номер для вершины
-                        Minim[Pos] = Math.Min(Minim[NextVerit], Minim[Pos]);
-                        // Нашли корень дерева или точку сочленения
-                        if (Minim[NextVerit] > Minim[Pos])
-                        // Печатаем блок
+                        if (NextVerit != Parent)
                         {
-                            Console.Write("Блок {0} состоит из ребер под номерами ", ++Blocks);
-                            while (EdgesStack.Count > 0)
-                                Console.Write("{0}, ", EdgesStack.Pop() + 1);
+                            int t, cur_size = EdgesStack.Count;
+                            // Если этого ребра еще нет в стеке
+                            if (!EdgesStack.Contains(Edge))
+                                EdgesStack.Push(Edge);
+
+                            //Если вершина еще не посещена
+                            if (Checked[NextVerit] == 0)
+                            {
+                                // Продолжаем обход из этой вершины
+                                t = DFS(NextVerit, Pos);
+                                if (t >= Checked[Pos])
+                                {
+                                    //++Child;
+                                    Console.Write("Блоку {0} принадлежат ребра: ", ++Blocks);
+                                    while (EdgesStack.Count != cur_size)
+                                    {
+                                        Console.Write("{0}, ", EdgesStack.Pop());
+                                    }
+                                    Console.WriteLine();
+                                }
+                            }
+                            else
+                                t = Checked[NextVerit];
+                            Minim = Math.Min(Minim, t);
                         }
                     }
                 }
-                else
-                {
-                    // Если вершина уже исследована и 
-                    if (Checked[NextVerit] < Checked[Pos] && NextVerit != Parent)
-                    {
-                        EdgesStack.Push(Edge);
-                        Minim[Pos] = Math.Min(Minim[NextVerit], Minim[Pos]);
-                    }
-                }
-            }                
+            }
+            return Minim;             
         }
     }
 }
